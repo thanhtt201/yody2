@@ -9,4 +9,4 @@ import { typeOrmConfig } from './configs/database/typeorm.config';
   controllers: [],
   providers: [],
 })
-export class AppModule {}
+export class AppModule { }

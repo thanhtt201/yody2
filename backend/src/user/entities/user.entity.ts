@@ -1,9 +1,9 @@
 import { RoleType } from 'src/share/enum/role-type.enum';
-import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 
 @Entity({ name: 'users' })
 export class User {
-  @PrimaryGeneratedColumn()
+  @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @Column()
@@ -27,4 +27,14 @@ export class User {
     default: RoleType.CUSTOMER,
   })
   role: string;
+
+  @CreateDateColumn({
+    name: 'created_at'
+  })
+  createdAt: Date;
+
+  @UpdateDateColumn({
+    name: 'updated_at'
+  })
+  updatedAt: Date;
 }
