@@ -3,8 +3,9 @@ import { config } from 'dotenv';
 config();
 
 export const JWT_CONFIG = {
-  secret: process.env.JWT_SECRET,
-  expiresIn: process.env.JWT_EXPIRED_IN,
+  accessSecret: process.env.JWT_ACCESS_TOKEN_SECRET,
+  refreshSecret: process.env.JWT_REFRESH_TOKEN_SECRET,
+  accessExpiresIn: process.env.JWT_ACCESS_TOKEN_EXPIRED_IN,
 };
 
 export const POSTGRESQL_CONFIG = {

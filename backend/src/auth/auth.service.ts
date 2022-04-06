@@ -1,47 +1,66 @@
+import { JWT_CONFIG } from 'src/configs/constant.config';
 import { Injectable } from '@nestjs/common';
 import { UserService } from 'src/user/user.service';
 import { RegisterDto } from './dto/register.dto';
 import { JwtService } from '@nestjs/jwt';
-import { pick } from 'lodash'
+import { pick } from 'lodash';
 import { LoginDto } from './dto/login.dto';
 import { isPasswordMatch } from 'src/share/utils/bcrytp.util';
+import { sign } from 'jsonwebtoken';
+import { Request, Response } from 'express';
 
 @Injectable()
 export class AuthService {
-  constructor(
-    private userService: UserService,
-    private jwtService: JwtService
-  ) { }
+  constructor(private userService: UserService, private jwtService: JwtService) {}
 
   async validateUser(email: string, password: string) {
-    const user = await this.userService.findUserByEmail(email)
+    const user = await this.userService.findUserByEmail(email);
     if (user && isPasswordMatch(password, user.password)) {
-      const { password, ...result } = user
+      const { password, ...result } = user;
 
-      return result
+      return result;
     }
 
-    return null
+    return null;
   }
 
   async registerUser(registerDto: RegisterDto) {
-    return this.userService.createUser(registerDto)
+    return this.userService.createUser(registerDto);
   }
 
   async loginUser(loginDto: LoginDto) {
-    const user = await this.userService.loginUser(loginDto)
+    const user = await this.userService.loginUser(loginDto);
 
-    const token = await this.signPayload(pick(user, ['id', 'email', 'role']))
+    // const token = await this.signPayload(pick(user, ['id', 'email', 'role']))
+    const accessToken = await this.signPayload({
+      userId: user.id,
+      email: user.email,
+    });
+    const refreshToken = sign(
+      {
+        userId: user.id,
+        email: user.email,
+      },
+      JWT_CONFIG.refreshSecret,
+      {
+        expiresIn: '1d',
+      }
+    );
 
     return {
       user,
-      token
-    }
+      accessToken,
+      refreshToken,
+    };
   }
 
   // generate access token
   async signPayload(payload: any) {
-    const token = await this.jwtService.sign(payload)
-    return token
+    const token = await this.jwtService.sign(payload);
+    return token;
+  }
+
+  async refreshToken(user, refreshToken: string): Promise<any> {
+    console.log('refreshToken', refreshToken);
   }
 }
