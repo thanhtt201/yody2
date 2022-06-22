@@ -34,7 +34,7 @@ export class AuthController {
   @Post('/login')
   async login(@Body() loginDto: LoginDto, @Res({ passthrough: true }) res: Response) {
     const user = await this.authService.loginUser(loginDto);
-    res.cookie('refreshToken', user.refreshToken);
+    res.cookie('refreshToken', user.refreshToken, { httpOnly: true });
     return {
       user: user.user,
       accessToken: user.accessToken,
@@ -54,14 +54,20 @@ export class AuthController {
   }
 
   @Post('/refreshToken')
-  @UseGuards(RtGuard)
-  refreshToken(@GetUser() user, @Req() req: Request) {
-    console.log('user', user);
-    const authHeader = req.header('Authorization');
-    const refreshToken = authHeader && authHeader.split(' ')[1];
-    if (!authHeader) {
-      throw new UnauthorizedException('Not authentication');
-    }
-    return this.authService.refreshToken(user, refreshToken);
+  async refreshToken(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
+    const { refreshToken } = req.cookies;
+    const refreshTokenUser = await this.authService.checkRefreshTokenUser(refreshToken);
+    // if (!refreshTokenUser) {
+    //   throw new UnauthorizedException('Not Refresh Token');
+    // }
+    const decodedRefreshToken = this.authService.decodeRefreshToken(refreshToken);
+    console.log('decodeRefreshToken', decodedRefreshToken);
+    const userRefreshToken = await this.authService.refreshToken(decodedRefreshToken);
+    res.cookie('refreshToken', userRefreshToken.refreshToken, { httpOnly: true });
+    return {
+      user: userRefreshToken.user,
+      accessToken: userRefreshToken.accessToken,
+      refreshToken: userRefreshToken.refreshToken,
+    };
   }
 }

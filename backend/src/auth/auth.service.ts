@@ -6,7 +6,7 @@ import { JwtService } from '@nestjs/jwt';
 import { pick } from 'lodash';
 import { LoginDto } from './dto/login.dto';
 import { isPasswordMatch } from 'src/share/utils/bcrytp.util';
-import { sign } from 'jsonwebtoken';
+import { sign, verify } from 'jsonwebtoken';
 import { Request, Response } from 'express';
 
 @Injectable()
@@ -32,7 +32,7 @@ export class AuthService {
     const user = await this.userService.loginUser(loginDto);
 
     // const token = await this.signPayload(pick(user, ['id', 'email', 'role']))
-    const accessToken = await this.signPayload({
+    const accessToken = this.signPayload({
       userId: user.id,
       email: user.email,
     });
@@ -43,9 +43,12 @@ export class AuthService {
       },
       JWT_CONFIG.refreshSecret,
       {
-        expiresIn: '1d',
+        expiresIn: '1h',
       }
     );
+    const userFind = await this.userService.findUserByEmail(loginDto.email);
+    userFind.refreshToken = refreshToken;
+    await this.userService.updateRefreshTokenUser(userFind);
 
     return {
       user,
@@ -55,12 +58,41 @@ export class AuthService {
   }
 
   // generate access token
-  async signPayload(payload: any) {
-    const token = await this.jwtService.sign(payload);
+  signPayload(payload: any) {
+    const token = this.jwtService.sign(payload);
     return token;
   }
 
-  async refreshToken(user, refreshToken: string): Promise<any> {
-    console.log('refreshToken', refreshToken);
+  async refreshToken(user: any): Promise<any> {
+    const accessToken = this.signPayload({
+      userId: user.userId,
+      email: user.email,
+    });
+    const refreshToken = sign(
+      {
+        userId: user.userId,
+        email: user.email,
+      },
+      JWT_CONFIG.refreshSecret,
+      {
+        expiresIn: '1h',
+      }
+    );
+    const userFind = await this.userService.findUserByEmail(user.email);
+    userFind.refreshToken = refreshToken;
+    await this.userService.updateRefreshTokenUser(userFind);
+    return {
+      user,
+      accessToken,
+      refreshToken,
+    };
+  }
+
+  async checkRefreshTokenUser(refreshToken: string): Promise<any> {
+    return await this.userService.checkRefreshTokenUser(refreshToken);
+  }
+
+  decodeRefreshToken(refreshToken: string) {
+    return verify(refreshToken, JWT_CONFIG.refreshSecret);
   }
 }

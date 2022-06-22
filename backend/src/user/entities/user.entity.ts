@@ -1,5 +1,11 @@
 import { RoleType } from 'src/share/enum/role-type.enum';
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 
 @Entity({ name: 'users' })
 export class User {
@@ -28,13 +34,19 @@ export class User {
   })
   role: string;
 
+  @Column({
+    name: 'refresh_token',
+    default: null,
+  })
+  refreshToken: string;
+
   @CreateDateColumn({
-    name: 'created_at'
+    name: 'created_at',
   })
   createdAt: Date;
 
   @UpdateDateColumn({
-    name: 'updated_at'
+    name: 'updated_at',
   })
   updatedAt: Date;
 }

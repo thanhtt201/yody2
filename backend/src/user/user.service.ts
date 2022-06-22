@@ -26,7 +26,7 @@ export class UserService {
 
       const userFound = await this.userRepo.findOne({ email });
       if (userFound) {
-        return 'not register';
+        throw new HttpException('This mail address already exists', HttpStatus.BAD_REQUEST);
       }
 
       const encryptedPassword = encryptPassword(password);
@@ -72,6 +72,14 @@ export class UserService {
 
   async findUserByEmail(email: string): Promise<any> {
     return await this.userRepo.findOne({ email });
+  }
+
+  async updateRefreshTokenUser(user: any): Promise<any> {
+    return await this.userRepo.save(user);
+  }
+
+  async checkRefreshTokenUser(refreshToken: string): Promise<any> {
+    return await this.userRepo.findOne({ refreshToken });
   }
 
   async findAll(): Promise<User[]> {
